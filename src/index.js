@@ -24,8 +24,7 @@ app.use("/loans", loanRoutes);
 
 const port = process.env.PORT || 3000;
 
-// Vercel menggunakan app sebagai handler.
-// Secara lokal, jalankan server pada port 3000.
+
 if (process.env.NODE_ENV !== "production") {
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
