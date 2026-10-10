@@ -174,8 +174,3 @@ Base URL Vercel:
 API dapat diuji menggunakan Postman dengan metode HTTP
 GET, POST, PUT, dan DELETE. Data tersimpan pada Supabase.
 
-## Catatan Keamanan
-
-Jangan mengunggah file `.env` atau kredensial database ke
-repository publik. Kebijakan akses database untuk proyek
-demonstrasi perlu dibatasi sebelum digunakan dalam produksi.

@@ -1,141 +1,99 @@
+import * as Loan from "../models/loanModel.js";
+import { isValidStatus } from "../models/categoryModel.js";
 
-import { LoanModel } from "../models/loanModel.js";
+export async function getLoans(req, res) {
+  try {
+    const { status } = req.query;
 
-const validStatuses = [
-  "Dipinjam",
-  "Dikembalikan",
-  "Terlambat"
-];
-
-const allowedFields = [
-  "book_id",
-  "book_title",
-  "member_id",
-  "member_name",
-  "loan_date",
-  "due_date",
-  "return_date",
-  "status"
-];
-
-const requiredFields = [
-  "book_id",
-  "book_title",
-  "member_id",
-  "member_name",
-  "loan_date",
-  "due_date",
-  "status"
-];
-
-function getPayload(body, isUpdate = false) {
-  const payload = {};
-
-  for (const field of allowedFields) {
-    if (Object.hasOwn(body, field)) {
-      payload[field] = body[field];
+    if (status && !isValidStatus(status)) {
+      return res.status(400).json({
+        message: "Status tidak valid"
+      });
     }
-  }
 
-  if (!isUpdate) {
-    for (const field of requiredFields) {
-      if (
-        payload[field] === undefined ||
-        payload[field] === null ||
-        payload[field] === ""
-      ) {
-        throw new Error(`Field ${field} wajib diisi`);
-      }
-    }
+    res.json(await Loan.getAllLoans(status));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-
-  if (
-    payload.status !== undefined &&
-    !validStatuses.includes(payload.status)
-  ) {
-    throw new Error("Status peminjaman tidak valid");
-  }
-
-  return payload;
 }
 
-function sendError(res, err) {
-  const message = err.message || "Terjadi kesalahan";
-
-  if (
-    message.includes("PGRST116") ||
-    message.includes("0 rows")
-  ) {
-    return res.status(404).json({ error: "Data tidak ditemukan" });
+export async function getLoan(req, res) {
+  try {
+    res.json(await Loan.getLoanById(req.params.id));
+  } catch (error) {
+    res.status(404).json({ message: error.message });
   }
-
-  return res.status(400).json({ error: message });
 }
 
-export const LoanController = {
-  async getAll(req, res) {
-    try {
-      const { status } = req.query;
+export async function addLoan(req, res) {
+  try {
+    const {
+      book_id, book_title, member_id, member_name,
+      loan_date, due_date, return_date = null,
+      status = "Dipinjam"
+    } = req.body;
 
-      if (status && !validStatuses.includes(status)) {
-        return res.status(400).json({
-          error: "Status harus Dipinjam, Dikembalikan, atau Terlambat"
-        });
-      }
-
-      const loans = await LoanModel.getAll(status);
-      return res.json(loans);
-    } catch (err) {
-      return sendError(res, err);
+    if (
+      !book_id || !book_title || !member_id || !member_name ||
+      !loan_date || !due_date || !isValidStatus(status)
+    ) {
+      return res.status(400).json({
+        message: "Data peminjaman belum lengkap atau status tidak valid"
+      });
     }
-  },
 
-  async getById(req, res) {
-    try {
-      const loan = await LoanModel.getById(req.params.id);
-      return res.json(loan);
-    } catch (err) {
-      return sendError(res, err);
+    if (due_date < loan_date) {
+      return res.status(400).json({
+        message: "Tanggal jatuh tempo tidak boleh sebelum tanggal pinjam"
+      });
     }
-  },
 
-  async create(req, res) {
-    try {
-      const payload = getPayload(req.body);
-      const loan = await LoanModel.create(payload);
-      return res.status(201).json(loan);
-    } catch (err) {
-      return sendError(res, err);
+    if (status === "Dikembalikan" && !return_date) {
+      return res.status(400).json({
+        message: "Tanggal pengembalian wajib diisi"
+      });
     }
-  },
 
-  async update(req, res) {
-    try {
-      const payload = getPayload(req.body, true);
-
-      if (Object.keys(payload).length === 0) {
-        return res.status(400).json({
-          error: "Minimal satu field harus diisi untuk diubah"
-        });
-      }
-
-      const loan = await LoanModel.update(
-        req.params.id,
-        payload
-      );
-
-      return res.json(loan);
-    } catch (err) {
-      return sendError(res, err);
-    }
-  },
-
-  async remove(req, res) {
-    try {
-      const result = await LoanModel.remove(req.params.id);
-      return res.json(result);
-    } catch (err) {
-      return sendError(res, err);
-    }
+    res.status(201).json(await Loan.createLoan({
+      book_id, book_title, member_id, member_name,
+      loan_date, due_date, return_date, status
+    }));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-};
+}
+
+export async function editLoan(req, res) {
+  try {
+    const { status, return_date, due_date } = req.body;
+
+    if (status !== undefined && !isValidStatus(status)) {
+      return res.status(400).json({ message: "Status tidak valid" });
+    }
+
+    if (
+      status === "Dikembalikan" &&
+      return_date === undefined
+    ) {
+      return res.status(400).json({
+        message: "Sertakan return_date saat mengembalikan buku"
+      });
+    }
+
+    res.json(await Loan.updateLoan(req.params.id, {
+      ...(status !== undefined && { status }),
+      ...(return_date !== undefined && { return_date }),
+      ...(due_date !== undefined && { due_date })
+    }));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+export async function removeLoan(req, res) {
+  try {
+    res.json(await Loan.deleteLoan(req.params.id));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}

@@ -1,0 +1,439 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistem Perpustakaan</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+    header {
+      background: #1e40af;
+      color: white;
+      padding: 24px 5%;
+    }
+    header h1 { margin: 0 0 8px; }
+    header p { margin: 0; color: #dbeafe; }
+    main { max-width: 1250px; margin: 25px auto; padding: 0 18px; }
+    nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    button {
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 7px;
+      background: #1d4ed8;
+      color: white;
+      cursor: pointer;
+    }
+    nav button { background: white; color: #1e40af; }
+    nav button.active { background: #1e40af; color: white; }
+    section.panel {
+      display: none;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px #0f172a0c;
+    }
+    section.panel.active { display: block; }
+    h2 { margin-top: 0; }
+    .form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 16px 0 22px;
+    }
+    input, select {
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      min-width: 140px;
+      flex: 1;
+    }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 13px;
+    }
+    th { background: #eff6ff; color: #1e40af; }
+    .status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    .Dipinjam { background: #dbeafe; color: #1d4ed8; }
+    .Dikembalikan { background: #dcfce7; color: #166534; }
+    .Terlambat { background: #fee2e2; color: #b91c1c; }
+    .secondary { background: #475569; }
+    #notice { margin: 12px 0; font-size: 14px; }
+    footer { text-align: center; padding: 24px; color: #64748b; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Perpustakaan</h1>
+  <p>Sistem Informasi Buku, Anggota, dan Peminjaman</p>
+</header>
+
+<main>
+  <nav>
+    <button class="active" data-panel="books">Data Buku</button>
+    <button data-panel="members">Data Anggota</button>
+    <button data-panel="loans">Peminjaman</button>
+    <button data-panel="categories">Kategori Status</button>
+  </nav>
+
+  <p id="notice" role="status"></p>
+
+  <section class="panel active" id="books">
+    <h2>Data Buku</h2>
+    <form class="form" id="bookForm">
+      <input name="id" placeholder="ID buku, contoh BK-004" required>
+      <input name="title" placeholder="Judul buku" required>
+      <input name="author" placeholder="Penulis" required>
+      <input name="category" placeholder="Kategori buku" required>
+      <input name="stock" type="number" min="0" placeholder="Stok" required>
+      <button>Tambah Buku</button>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>Judul</th><th>Penulis</th>
+          <th>Kategori</th><th>Stok</th><th>Aksi</th>
+        </tr></thead>
+        <tbody id="bookRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="members">
+    <h2>Data Anggota</h2>
+    <form class="form" id="memberForm">
+      <input name="id" placeholder="ID anggota, contoh AG-004" required>
+      <input name="name" placeholder="Nama anggota" required>
+      <button>Tambah Anggota</button>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Nama</th><th>Aksi</th></tr></thead>
+        <tbody id="memberRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="loans">
+    <h2>Transaksi Peminjaman</h2>
+    <form class="form" id="loanForm">
+      <select name="book_id" id="bookSelect" required>
+        <option value="">Pilih buku</option>
+      </select>
+      <select name="member_id" id="memberSelect" required>
+        <option value="">Pilih anggota</option>
+      </select>
+      <label>Tanggal pinjam <input name="loan_date" type="date" required></label>
+      <label>Tenggat <input name="due_date" type="date" required></label>
+      <button>Pinjam Buku</button>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Buku</th><th>Peminjam</th><th>Tanggal Pinjam</th>
+          <th>Tenggat</th><th>Status</th><th>Aksi</th>
+        </tr></thead>
+        <tbody id="loanRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="categories">
+    <h2>Status Peminjaman</h2>
+    <p>Pilih status untuk melihat transaksi terkait.</p>
+    <div class="form">
+      <select id="statusSelect">
+        <option value="">Semua status</option>
+        <option>Dipinjam</option>
+        <option>Dikembalikan</option>
+        <option>Terlambat</option>
+      </select>
+      <button id="filterButton" type="button">Terapkan Filter</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Buku</th><th>Peminjam</th><th>Tenggat</th><th>Status</th>
+        </tr></thead>
+        <tbody id="categoryRows"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>REST API Perpustakaan</footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  let books = [], members = [], loans = [];
+
+  function notify(message) {
+    $("notice").textContent = message;
+  }
+
+  async function api(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      }
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result.message || "Permintaan gagal");
+    }
+    return result;
+  }
+
+  function cell(row, value) {
+    const td = row.insertCell();
+    td.textContent = value ?? "-";
+    return td;
+  }
+
+  function button(row, label, action, secondary = false) {
+    const td = row.insertCell();
+    const b = document.createElement("button");
+    b.textContent = label;
+    if (secondary) b.className = "secondary";
+    b.addEventListener("click", action);
+    td.appendChild(b);
+  }
+
+  function statusCell(row, status) {
+    const td = row.insertCell();
+    const badge = document.createElement("span");
+    badge.className = "status " + status;
+    badge.textContent = status;
+    td.appendChild(badge);
+  }
+
+  async function loadBooks() {
+    books = await api("/products");
+    $("bookRows").replaceChildren();
+    $("bookSelect").replaceChildren(new Option("Pilih buku", ""));
+
+    books.forEach(book => {
+      const row = $("bookRows").insertRow();
+      [book.id, book.title, book.author, book.category, book.stock]
+        .forEach(value => cell(row, value));
+
+      button(row, "Edit", async () => {
+        const title = prompt("Judul buku:", book.title);
+        if (title === null) return;
+        const author = prompt("Penulis:", book.author);
+        if (author === null) return;
+        const category = prompt("Kategori:", book.category);
+        if (category === null) return;
+        const stock = prompt("Stok:", book.stock);
+        if (stock === null) return;
+
+        await api("/products/" + encodeURIComponent(book.id), {
+          method: "PUT",
+          body: JSON.stringify({
+            title, author, category, stock: Number(stock)
+          })
+        });
+        await refresh();
+        notify("Data buku berhasil diubah.");
+      });
+
+      $("bookSelect").add(new Option(
+        book.id + " — " + book.title + " (stok " + book.stock + ")",
+        book.id
+      ));
+    });
+  }
+
+  async function loadMembers() {
+    members = await api("/customers");
+    $("memberRows").replaceChildren();
+    $("memberSelect").replaceChildren(new Option("Pilih anggota", ""));
+
+    members.forEach(member => {
+      const row = $("memberRows").insertRow();
+      cell(row, member.id);
+      cell(row, member.name);
+
+      button(row, "Edit", async () => {
+        const name = prompt("Nama anggota:", member.name);
+        if (name === null) return;
+
+        await api("/customers/" + encodeURIComponent(member.id), {
+          method: "PUT",
+          body: JSON.stringify({ name })
+        });
+        await refresh();
+        notify("Nama anggota berhasil diubah.");
+      });
+
+      $("memberSelect").add(new Option(
+        member.id + " — " + member.name, member.id
+      ));
+    });
+  }
+
+  async function loadLoans(status = "") {
+    loans = await api("/loans");
+    renderLoans();
+    renderCategories(status);
+  }
+
+  function renderLoans() {
+    $("loanRows").replaceChildren();
+
+    loans.forEach(loan => {
+      const row = $("loanRows").insertRow();
+      cell(row, loan.book_title);
+      cell(row, loan.member_name);
+      cell(row, loan.loan_date);
+      cell(row, loan.due_date);
+      statusCell(row, loan.status);
+
+      if (loan.status !== "Dikembalikan") {
+        button(row, "Kembalikan", async () => {
+          const returnDate = new Date().toLocaleDateString("en-CA");
+
+          await api("/loans/" + encodeURIComponent(loan.id), {
+            method: "PUT",
+            body: JSON.stringify({
+              status: "Dikembalikan",
+              return_date: returnDate
+            })
+          });
+
+          await refresh();
+          notify("Buku berhasil ditandai sudah dikembalikan.");
+        });
+      } else {
+        cell(row, "Selesai");
+      }
+    });
+  }
+
+  function renderCategories(status = "") {
+    $("categoryRows").replaceChildren();
+
+    loans.filter(loan => !status || loan.status === status)
+      .forEach(loan => {
+        const row = $("categoryRows").insertRow();
+        cell(row, loan.book_title);
+        cell(row, loan.member_name);
+        cell(row, loan.due_date);
+        statusCell(row, loan.status);
+      });
+  }
+
+  async function refresh() {
+    await loadBooks();
+    await loadMembers();
+    await loadLoans($("statusSelect").value);
+  }
+
+  $("bookForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    try {
+      const form = new FormData(event.target);
+      const product = Object.fromEntries(form.entries());
+      product.stock = Number(product.stock);
+
+      await api("/products", {
+        method: "POST",
+        body: JSON.stringify(product)
+      });
+
+      event.target.reset();
+      await refresh();
+      notify("Buku berhasil ditambahkan.");
+    } catch (error) {
+      notify(error.message);
+    }
+  });
+
+  $("memberForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    try {
+      const customer = Object.fromEntries(new FormData(event.target));
+
+      await api("/customers", {
+        method: "POST",
+        body: JSON.stringify(customer)
+      });
+
+      event.target.reset();
+      await refresh();
+      notify("Anggota berhasil ditambahkan.");
+    } catch (error) {
+      notify(error.message);
+    }
+  });
+
+  $("loanForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    try {
+      const form = new FormData(event.target);
+      const book = books.find(b => b.id === form.get("book_id"));
+      const member = members.find(m => m.id === form.get("member_id"));
+
+      if (!book || !member) throw new Error("Pilih buku dan anggota.");
+      if (book.stock <= 0) throw new Error("Stok buku habis.");
+
+      await api("/loans", {
+        method: "POST",
+        body: JSON.stringify({
+          book_id: book.id,
+          book_title: book.title,
+          member_id: member.id,
+          member_name: member.name,
+          loan_date: form.get("loan_date"),
+          due_date: form.get("due_date"),
+          return_date: null,
+          status: "Dipinjam"
+        })
+      });
+
+      event.target.reset();
+      await refresh();
+      notify("Transaksi peminjaman berhasil disimpan.");
+    } catch (error) {
+      notify(error.message);
+    }
+  });
+
+  $("filterButton").addEventListener("click", () => {
+    renderCategories($("statusSelect").value);
+  });
+
+  document.querySelectorAll("nav button").forEach(button => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("nav button")
+        .forEach(b => b.classList.toggle("active", b === button));
+      document.querySelectorAll(".panel")
+        .forEach(panel => panel.classList.toggle(
+          "active", panel.id === button.dataset.panel
+        ));
+    });
+  });
+
+  refresh().catch(error => notify("Gagal memuat data: " + error.message));
+</script>
+</body>
+</html>
