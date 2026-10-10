@@ -1,176 +1,209 @@
+# Perpustakaan API
 
-# REST API Peminjaman Buku Perpustakaan
+REST API untuk sistem informasi perpustakaan yang dibangun menggunakan Node.js, Express.js, dan Supabase sebagai database. Aplikasi ini digunakan untuk mengelola data buku, anggota perpustakaan, kategori status peminjaman, dan transaksi peminjaman buku. Aplikasi juga dilengkapi dashboard web untuk mempermudah pengelolaan data melalui browser.
 
-REST API sederhana untuk mengelola pencatatan peminjaman
-buku perpustakaan menggunakan Node.js, Express.js, dan Supabase.
+## Fitur
 
-## Deskripsi dan Tujuan
+1. **Product (Buku)**
+   - Menampilkan daftar buku.
+   - Menambahkan buku baru.
+   - Mengubah informasi buku.
+   - Menghapus data buku.
+   - Menyimpan informasi ID, judul, penulis, kategori buku, dan stok.
 
-Proyek ini dibuat untuk memenuhi tugas responsi praktikum
-Application Programming Interface (API).
+2. **Customer (Anggota)**
+   - Menampilkan daftar anggota.
+   - Menambahkan anggota baru.
+   - Mengubah data anggota.
+   - Menghapus data anggota.
 
-API menyediakan operasi CRUD (Create, Read, Update, Delete)
-untuk data peminjaman buku serta fitur filter berdasarkan
-status peminjaman.
+3. **Category (Status Peminjaman)**
+   - Menampilkan daftar status peminjaman.
+   - Memfilter transaksi berdasarkan status `Dipinjam`, `Dikembalikan`, dan `Terlambat`.
 
-## Teknologi
+4. **Loan (Transaksi Peminjaman)**
+   - Menampilkan daftar transaksi peminjaman.
+   - Menambahkan transaksi peminjaman.
+   - Mengubah data transaksi.
+   - Menghapus transaksi.
+   - Mencatat tanggal peminjaman, tanggal jatuh tempo, tanggal pengembalian, dan status transaksi.
+
+5. **Dashboard Web**
+   - Menampilkan data buku, anggota, dan transaksi.
+   - Menambahkan dan mengelola data melalui antarmuka web.
+   - Mempermudah proses pencatatan peminjaman dan pengembalian buku.
+
+## Teknologi yang Digunakan
 
 - Node.js
 - Express.js
-- Supabase (PostgreSQL)
-- Postman
-- GitHub
-- Vercel
+- Supabase
+- JavaScript
+- HTML, CSS, dan JavaScript
+- Postman untuk pengujian API
+- Git dan GitHub untuk pengelolaan kode sumber
 
-## Struktur Data
+## Struktur Proyek
 
-Tabel yang digunakan: `loans`
+```text
+Perpustakaan-API/
+├── src/
+│   ├── config/
+│   │   └── supabaseClient.js
+│   ├── models/
+│   │   ├── productModel.js
+│   │   ├── customerModel.js
+│   │   ├── categoryModel.js
+│   │   └── loanModel.js
+│   ├── controllers/
+│   │   ├── productController.js
+│   │   ├── customerController.js
+│   │   ├── categoryController.js
+│   │   └── loanController.js
+│   ├── routes/
+│   │   ├── productRoutes.js
+│   │   ├── customerRoutes.js
+│   │   ├── categoryRoutes.js
+│   │   └── loanRoutes.js
+│   ├── views/
+│   │   └── index.html
+│   └── index.js
+├── .env
+├── .gitignore
+├── package.json
+├── vercel.json
+└── README.md
+```
 
-| Kolom | Tipe | Keterangan |
+## Persyaratan
+
+Pastikan perangkat telah memiliki:
+
+- Node.js dan npm.
+- Akun Supabase.
+- Postman untuk menguji endpoint API.
+
+## Instalasi dan Menjalankan Aplikasi
+
+### 1. Clone repository
+
+```bash
+git clone https://github.com/Siomayy13/Perpustakaan-API.git
+cd Perpustakaan-API
+```
+
+### 2. Instal dependensi
+
+```bash
+npm install
+```
+
+### 3. Konfigurasi environment
+
+Buat file `.env` di direktori utama proyek dan isi dengan konfigurasi Supabase:
+
+```env
+SUPABASE_URL=URL_PROYEK_SUPABASE
+SUPABASE_KEY=ANON_PUBLIC_KEY_SUPABASE
+```
+
+Ganti nilai tersebut dengan URL dan anon public key dari proyek Supabase milikmu. Jangan mengunggah file `.env` atau service role key ke repository publik.
+
+### 4. Siapkan database
+
+Buat tabel `products` dan `customers` di Supabase SQL Editor sesuai dengan struktur yang digunakan oleh model aplikasi.
+
+Pastikan tabel `loans` juga tersedia dengan kolom yang digunakan oleh `loanModel.js`, termasuk `book_id`, `book_title`, `member_id`, `member_name`, `loan_date`, `due_date`, `return_date`, dan `status`.
+
+Konfigurasikan Row Level Security (RLS) dan kebijakan akses Supabase sesuai kebutuhan aplikasi. Untuk penggunaan produksi, jangan memberikan akses publik tanpa autentikasi dan pembatasan izin yang sesuai.
+
+### 5. Jalankan server
+
+```bash
+npm run dev
+```
+
+Jika server berjalan dengan benar, API dapat diakses melalui:
+
+```text
+http://localhost:3000
+```
+
+Dashboard web dapat dibuka melalui alamat yang sama di browser.
+
+## Endpoint API
+
+Base URL lokal:
+
+`http://localhost:3000`
+
+### Product — Buku
+
+| Method | Endpoint | Keterangan |
 |---|---|---|
-| id | UUID | Primary key, dibuat otomatis |
-| book_id | VARCHAR(20) | ID buku |
-| book_title | VARCHAR(150) | Judul buku |
-| member_id | VARCHAR(20) | ID anggota |
-| member_name | VARCHAR(100) | Nama anggota |
-| loan_date | DATE | Tanggal peminjaman |
-| due_date | DATE | Batas pengembalian |
-| return_date | DATE | Tanggal pengembalian, boleh kosong |
-| status | VARCHAR(20) | Status peminjaman |
-| created_at | TIMESTAMPTZ | Waktu data dibuat |
-| updated_at | TIMESTAMPTZ | Waktu data diperbarui |
+| GET | `/products` | Menampilkan semua buku |
+| POST | `/products` | Menambahkan buku |
+| PUT | `/products/:id` | Mengubah data buku |
+| DELETE | `/products/:id` | Menghapus buku |
 
-Status yang diperbolehkan:
-- Dipinjam
-- Dikembalikan
-- Terlambat
+### Customer — Anggota
 
-## Daftar Endpoint
-
-| Method | Endpoint | Fungsi |
+| Method | Endpoint | Keterangan |
 |---|---|---|
-| GET | /loans | Mengambil semua data |
-| GET | /loans/:id | Mengambil satu data |
-| POST | /loans | Menambah peminjaman |
-| PUT | /loans/:id | Memperbarui peminjaman |
-| DELETE | /loans/:id | Menghapus peminjaman |
-| GET | /loans?status=Terlambat | Filter status |
+| GET | `/customers` | Menampilkan semua anggota |
+| POST | `/customers` | Menambahkan anggota |
+| PUT | `/customers/:id` | Mengubah data anggota |
+| DELETE | `/customers/:id` | Menghapus anggota |
 
-## Contoh Request
+### Category — Status Peminjaman
 
-### 1. Menambahkan peminjaman
+| Method | Endpoint | Keterangan |
+|---|---|---|
+| GET | `/categories` | Menampilkan status peminjaman |
+| GET | `/categories/:status` | Menampilkan transaksi berdasarkan status |
 
-POST /loans
+Status yang tersedia adalah `Dipinjam`, `Dikembalikan`, dan `Terlambat`.
+
+### Loan — Transaksi Peminjaman
+
+| Method | Endpoint | Keterangan |
+|---|---|---|
+| GET | `/loans` | Menampilkan semua transaksi |
+| GET | `/loans/:id` | Menampilkan transaksi berdasarkan ID |
+| POST | `/loans` | Menambahkan transaksi peminjaman |
+| PUT | `/loans/:id` | Mengubah transaksi |
+| DELETE | `/loans/:id` | Menghapus transaksi |
+
+## Pengujian API dengan Postman
+
+1. Jalankan server menggunakan `npm run dev`.
+2. Buka Postman.
+3. Gunakan base URL `http://localhost:3000`.
+4. Pilih method sesuai endpoint yang ingin diuji.
+5. Untuk permintaan `POST` dan `PUT`, pilih **Body → raw → JSON** jika endpoint menerima data JSON.
+6. Klik **Send** dan periksa respons yang diterima.
+
+Contoh pengujian menampilkan buku:
+
+```http
+GET http://localhost:3000/products
+```
+
+Contoh data untuk menambahkan buku:
 
 ```json
 {
-  "book_id": "BK-001",
-  "book_title": "Laskar Pelangi",
-  "member_id": "AG-001",
-  "member_name": "Andi Pratama",
-  "loan_date": "2026-10-01",
-  "due_date": "2026-10-08",
-  "return_date": null,
-  "status": "Terlambat"
+  "id": "BK-004",
+  "title": "Bumi Manusia",
+  "author": "Pramoedya Ananta Toer",
+  "category": "Sejarah",
+  "stock": 6
 }
 ```
 
-### 2. Mengambil semua data
+## Catatan
 
-GET /loans
-
-### 3. Memfilter status
-
-GET /loans?status=Terlambat
-
-### 4. Mengubah status peminjaman
-
-PUT /loans/:id
-
-```json
-{
-  "status": "Dikembalikan",
-  "return_date": "2026-10-10"
-}
-```
-
-### 5. Menghapus peminjaman
-
-DELETE /loans/:id
-
-Ganti `:id` dengan UUID peminjaman yang valid.
-
-## Contoh Response
-
-Contoh respons ketika data berhasil dibuat (HTTP 201):
-
-```json
-{
-  "id": "UUID_DARI_DATABASE",
-  "book_id": "BK-001",
-  "book_title": "Laskar Pelangi",
-  "member_id": "AG-001",
-  "member_name": "Andi Pratama",
-  "loan_date": "2026-10-01",
-  "due_date": "2026-10-08",
-  "return_date": null,
-  "status": "Terlambat"
-}
-```
-
-Nilai UUID dan timestamp dibuat oleh database dan dapat berbeda.
-
-## Instalasi dan Menjalankan Secara Lokal
-
-### Prasyarat
-
-- Node.js dan npm
-- Akun Supabase
-- Git
-
-### Langkah instalasi
-
-1. Clone repository:
-
-   ```bash
-   git clone https://github.com/USERNAME/Perpustakaan-API.git
-   cd Perpustakaan-API
-   ```
-
-2. Instal dependency:
-
-   ```bash
-   npm install
-   ```
-
-3. Buat file `.env` di direktori utama:
-
-   ```dotenv
-   SUPABASE_URL=URL_SUPABASE_KAMU
-   SUPABASE_KEY=KEY_SUPABASE_KAMU
-   PORT=3000
-   ```
-
-4. Buat tabel `loans` pada Supabase menggunakan SQL
-   yang disediakan dalam dokumentasi proyek.
-
-5. Jalankan API:
-
-   ```bash
-   npm run dev
-   ```
-
-6. Buka endpoint:
-
-   `http://localhost:3000/`
-
-## Deployment
-
-Base URL Vercel:
-`ISI_URL_VERCEL_SETELAH_DEPLOYMENT`
-
-## Pengujian
-
-API dapat diuji menggunakan Postman dengan metode HTTP
-GET, POST, PUT, dan DELETE. Data tersimpan pada Supabase.
-
+- Nama tabel dan kolom Supabase harus sesuai dengan kode model.
+- Status peminjaman yang digunakan adalah `Dipinjam`, `Dikembalikan`, dan `Terlambat`.
+- Penghitungan status keterlambatan dan pembaruan stok otomatis perlu diimplementasikan secara eksplisit apabila ingin dilakukan oleh sistem.
+- Untuk penggunaan produksi, tambahkan autentikasi, validasi data, serta kebijakan akses database yang aman.
